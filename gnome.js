@@ -64,6 +64,13 @@ client.on('message', info => {
         info.channel.send(ascii_gnome);
         printMessage(info);
     }
+    else if (message.toLowerCase() === "gnot a gnelf") { //adds a command to trigger the tactical woo
+        if (info.member.voice.channel) {
+            tactiWoo(info.member.voice.channel);
+        } else {
+            info.reply('you are not in a voice channel!');
+        }
+    }
 });
 
 
@@ -104,7 +111,14 @@ client.on('voiceStateUpdate', (os, ns) => {
 
     log(`${getUserNameID(member.user)} joined channel: ${getChannelNameID(ns.channel)})`);
 
-    woo(member.voice.channel);
+    if (Math.random() > 0.10) { //any random woo has a 10% chance to become a tactiwoo
+        woo(member.voice.channel);
+    }
+    else {
+        tactiWoo(member.voice.channel);
+    }
+
+    
 });
 
 
@@ -144,6 +158,20 @@ async function woo(channel) { // vs = voice state
         .catch(console.log);
 }
 
+async function tactiWoo(channel) { //runs the woo command three times on a voice channel
+    //burst-fire gnomes
+    if (channel === undefined) {
+        log('channgel undefined');
+        return;
+    }
+
+    woo(channel);
+    await sleep(100); //hooray for async functions
+    woo(channel); //since woo is also async, sleeping tactiwoo shouldn't affect it
+    await sleep(100);
+    woo(channel);
+    //achieve tactical superiority
+}
 
 
 
