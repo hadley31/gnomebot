@@ -50,7 +50,7 @@ for (const file of textTriggerFiles) {
 }
 
 client.on("ready", (event) => {
-  logger.info(`Client connected.\nLogged in as: ${getUserNameIDString(client.user)}`)
+  logger.info(`Client connected. Logged in as: ${getUserNameIDString(client.user)}`)
   client.user.setActivity("Hello me ol' chum!")
 })
 
@@ -77,7 +77,7 @@ client.on("interactionCreate", (interaction) => {
     logger.info(`${getUserNameIDString(interaction.user)} used command: ${interaction}`)
     return client.commands.get(interaction.commandName).execute(interaction)
   } catch (err) {
-    logger.error(err)
+    logger.error(`An error occurred while running command: ${interaction}:\n${err}`)
     return interaction.reply({ content: "An error occurred while executing that command!", ephemeral: true })
   }
 })
@@ -90,7 +90,7 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => {
   voiceTriggers.forEach(async (trigger) => {
     try {
       if (await trigger.test(oldVoiceState, newVoiceState)) {
-        logger.info(`${getUserNameIDString(oldVoiceState.member.user)} triggered a voice event: ${trigger.name}`)
+        logger.info(`${getUserNameIDString(oldVoiceState.member.user)} triggered a voice event: ${trigger.name}`, { 'old_channel': oldVoiceState.channel, 'new_channel': newVoiceState.channel})
         trigger.execute(oldVoiceState, newVoiceState)
       }
     } catch (err) {
