@@ -3,7 +3,6 @@ import DiscordUtil, { getUserNameIDString } from "./util/discord.js"
 import logger from "./util/logger.js"
 import fs from "fs"
 import env from "dotenv"
-import { COMMAND_PREFIX } from "./constants.js"
 
 env.config()
 
@@ -86,7 +85,7 @@ client.on("interactionCreate", (interaction) => {
 // Called when anything about a user's voice state changes (i.e. mute, unmute, join,leave,change channel, etc.)
 client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => {
   if (oldVoiceState.member.user.id === oldVoiceState.client.user.id) return
-  logger.debug(`${oldVoiceState.member.user.username}'s voice state changed`)
+  logger.debug(`${oldVoiceState.member.user.username}'s voice state changed:\n${oldVoiceState.channel?.name} -> ${newVoiceState?.channel?.name}`)
   voiceTriggers.forEach(async (trigger) => {
     try {
       if (await trigger.test(oldVoiceState, newVoiceState)) {
@@ -100,7 +99,7 @@ client.on("voiceStateUpdate", (oldVoiceState, newVoiceState) => {
 })
 
 client.on("disconnect", (err) => {
-  logger.info("Gnombot disconnected from discord")
+  logger.info("Gnomebot disconnected from discord")
 })
 
 client.on("error", (err) => {
