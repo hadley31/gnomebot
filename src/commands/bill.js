@@ -1,5 +1,5 @@
-import logger from "../util/logger.js"
-import { playSound } from "../util/discord.js"
+import logger from "../utilities/logger.js"
+import { playSound } from "../utilities/discord.js"
 import ytdl from "ytdl-core"
 import { closestMatch } from 'closest-match'
 import fetch from 'node-fetch'
@@ -14,6 +14,8 @@ export default {
    */
   async execute(interaction) {
     const song = interaction.options.getString('title')
+    const volume = interaction.options.getInteger('volume', false) || 30
+    const volumePercent = volume / 100.0
 
     const songs = await getSongs()
 
@@ -30,9 +32,9 @@ export default {
 
     const stream = ytdl(videoUrl, { filter: 'audioonly' })
 
-    playSound(userVoiceChannel, stream, { volume: 0.3 })
+    playSound(userVoiceChannel, stream, { volume: volumePercent })
 
-    return interaction.reply(`Playing \`${closestMatchingSong}\` by Bill Wurtz in ${userVoiceChannel}`)
+    return interaction.reply(`**Now playing**: \`${closestMatchingSong}\` by Bill Wurtz in ${userVoiceChannel}`)
   }
 }
 

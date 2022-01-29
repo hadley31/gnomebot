@@ -94,12 +94,18 @@ const commands = [
     .setDescription('Replies with the source repository of gnomebot'),
   new SlashCommandBuilder()
     .setName('bill')
-    .setDescription('Replies with the source repository of gnomebot')
+    .setDescription('Plays a Bill Wurtz song in your voice channel')
     .addStringOption(option =>
       option
         .setName('title')
         .setDescription('The title of the song to play')
         .setRequired(true)
+    )
+    .addIntegerOption(option =>
+      option
+        .setName('volume')
+        .setDescription('Volume to use: 0-100')
+        .setRequired(false)
     ),
 ].map(command => command.toJSON())
 

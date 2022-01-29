@@ -2,7 +2,7 @@ import { Chess } from 'chess.js'
 import { closestMatch } from 'closest-match'
 import _ from "lodash"
 import { ERROR_RESPONSES } from '../constants.js'
-import logger from '../util/logger.js'
+import logger from '../utilities/logger.js'
 import { RedisGameStore, SimpleGameStore } from './ChessGameStore.js'
 
 
