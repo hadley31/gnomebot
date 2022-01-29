@@ -51,12 +51,12 @@ class ChessService {
       }
     }
 
-    // Update Game in Store
-    logger.debug('Storing new chess game state...')
-    this.store.updateGame(channelId, game)
-
     // If the user's move ended the game
     if (game.game_over()) {
+      // Update Game in Store
+      logger.debug('Storing new chess game state...')
+      this.store.updateGame(channelId, game)
+
       return {
         reply: 'You win. Well played!',
         game: game,
