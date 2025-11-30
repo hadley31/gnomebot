@@ -1,12 +1,16 @@
-FROM node:18.20.2
+FROM oven/bun:latest
 
 WORKDIR /app
 
 RUN apt update && apt install build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libsodium-dev ffmpeg -y
 
-COPY package.json yarn.lock ./
-RUN yarn install --pure-lockfile
+COPY bun.lock .
+COPY package.json .
 
-COPY . .
+RUN bun install --frozen-lockfile
 
-CMD ["yarn", "run", "start"]
+COPY src ./src
+
+USER bun
+
+CMD ["bun", "run", "start"]

@@ -4,6 +4,7 @@ import ytdl from "ytdl-core"
 import { closestMatch } from 'closest-match'
 import _ from 'lodash'
 import { SlashCommandBuilder } from '@discordjs/builders'
+import { MessageFlags } from "discord.js"
 
 
 export default {
@@ -21,7 +22,7 @@ export default {
     const userVoiceChannel = interaction.member.voice?.channel
 
     if (!userVoiceChannel) {
-      return interaction.reply({ content: 'You must be in a voice channel!', ephemeral: true })
+      return interaction.reply({ content: 'You must be in a voice channel!', options: { flags: MessageFlags.Ephemeral } })
     }
 
     const songs = await getSongs()

@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Collection } from "discord.js"
+import { Client, GatewayIntentBits, Collection, MessageFlags } from "discord.js"
 import DiscordUtil, { getUserNameIDString } from "./utilities/discord.js"
 import logger from "./utilities/logger.js"
 import fs from "fs"
@@ -59,7 +59,7 @@ for (const file of textTriggerFiles) {
   logger.debug(`Added text trigger: ${trigger.name} (${file})`)
 }
 
-client.on("ready", (event) => {
+client.on("clientReady", (event) => {
   logger.info(`Client connected. Logged in as: ${getUserNameIDString(client.user)}`)
   client.user.setActivity("Hello me ol' chum!")
 })
@@ -88,7 +88,7 @@ client.on("interactionCreate", (interaction) => {
     return client.commands.get(interaction.commandName).execute(interaction)
   } catch (err) {
     logger.error(`An error occurred while running command: ${interaction}:\n${err}`)
-    return interaction.reply({ content: "An error occurred while executing that command!", ephemeral: true })
+    return interaction.reply({ content: "An error occurred while executing that command!", options: { flags: MessageFlags.Ephemeral } })
   }
 })
 

@@ -1,3 +1,4 @@
+import { MessageFlags } from "discord.js"
 import { ERROR_RESPONSES } from "../constants.js"
 import chess from "../services/chess.js"
 import { getGameImageEmbed } from "../utilities/chess.js"
@@ -93,7 +94,7 @@ const handleSubcommandMove = async (interaction) => {
   const result = await chess.handleMove(interaction.channel, interaction.user, moveOption)
 
   if (result.error) {
-    return interaction.reply({ content: result.errorReply, ephemeral: true })
+    return interaction.reply({ content: result.errorReply, options: { flags: MessageFlags.Ephemeral } })
   }
 
   const { game, side, reply, move } = result
@@ -120,11 +121,11 @@ const handleSubcommandNew = async (interaction) => {
 
   if (existingGame && !existingGame.isGameOver() && !forceCreateOption) {
     logger.debug(`Existing game: ${existingGame}`)
-    return interaction.reply({ content: 'There is already game in progress in this channel', ephemeral: true })
+    return interaction.reply({ content: 'There is already game in progress in this channel', options: { flags: MessageFlags.Ephemeral } })
   }
 
   if (forceCreateOption && !hasPermission) {
-    return interaction.reply({ content: 'You do not have permission to use force option.', ephemeral: true })
+    return interaction.reply({ content: 'You do not have permission to use force option.', options: { flags: MessageFlags.Ephemeral } })
   }
 
   const side = getSide(sideOption)
@@ -133,7 +134,7 @@ const handleSubcommandNew = async (interaction) => {
   const game = await chess.createGame(interaction.channelId, { side: side, fen: fenOption, whiteUserId: interaction.user.id, blackUserId: opponentUserId })
 
   if (!game) {
-    return interaction.reply({ content: 'Something went wrong... Unable to create new game.', ephemeral: true })
+    return interaction.reply({ content: 'Something went wrong... Unable to create new game.', options: { flags: MessageFlags.Ephemeral } })
   }
 
   const move = game.history({ verbose: true }).at(-1) || {}
@@ -159,10 +160,10 @@ const handleSubcommandFEN = async (interaction) => {
   const game = await chess.getGame(interaction.channelId)
 
   if (!game) {
-    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], ephemeral: true })
+    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], options: { flags: MessageFlags.Ephemeral } })
   }
 
-  return interaction.reply({ content: `\`${game.fen()}\``, ephemeral: true })
+  return interaction.reply({ content: `\`${game.fen()}\``, options: { flags: MessageFlags.Ephemeral } })
 }
 
 
@@ -174,10 +175,10 @@ const handleSubcommandMoves = async (interaction) => {
   const game = await chess.getGame(interaction.channel)
 
   if (!game) {
-    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], ephemeral: true })
+    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], options: { flags: MessageFlags.Ephemeral } })
   }
 
   const moves = await game.moves()
   const moveString = moves.map(x => `**${x}**`).join(', ')
-  return interaction.reply({ content: `Valid moves are: ${moveString}`, ephemeral: true })
+  return interaction.reply({ content: `Valid moves are: ${moveString}`, options: { flags: MessageFlags.Ephemeral } })
 }

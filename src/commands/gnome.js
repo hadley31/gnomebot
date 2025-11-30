@@ -2,7 +2,7 @@ import logger from "../utilities/logger.js"
 import { getUserNameIDString, playSound, } from "../utilities/discord.js"
 import { GNOME_SOUND, GNOME_POWER } from "../constants.js"
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { ChannelType } from "discord.js"
+import { ChannelType, MessageFlags } from "discord.js"
 import { getVoiceConnection } from "@discordjs/voice"
 
 
@@ -20,7 +20,7 @@ export default {
 
     if (!hasPermission && (userOption || channelOption)) {
       logger.info(`${getUserNameIDString(interaction.author)} is not an administrator.`)
-      return interaction.reply({ content: "You must be an administrator to use that command", ephemeral: true })
+      return interaction.reply({ content: "You must be an administrator to use that command", options: { flags: MessageFlags.Ephemeral } })
     }
 
     const channel = getChannel(interaction, channelOption, userOption)
@@ -107,7 +107,7 @@ const getChannel = (interaction, channelOption, userOption) => {
  * @param {import('discord.js').VoiceChannel} channel
  */
 const handleGnomePower = async (interaction, channel) => {
-  await interaction.reply({ content: `Joining voice channel: ${channel}`, ephemeral: true })
+  await interaction.reply({ content: `Joining voice channel: ${channel}`, options: { flags: MessageFlags.Ephemeral } })
 
   return playSound(channel, GNOME_POWER)
 }
@@ -120,10 +120,10 @@ const handleGnomePower = async (interaction, channel) => {
 const handleDefaultOption = async (interaction, channel) => {
   if (!channel) {
     logger.info(`${getUserNameIDString(interaction.member)} is not in a voice channel.`)
-    return interaction.reply({ content: "You are not in a voice channel!", ephemeral: true })
+    return interaction.reply({ content: "You are not in a voice channel!", options: { flags: MessageFlags.Ephemeral } })
   }
 
-  await interaction.reply({ content: `Joining voice channel: ${channel}`, ephemeral: true })
+  await interaction.reply({ content: `Joining voice channel: ${channel}`, options: { flags: MessageFlags.Ephemeral } })
 
   return playSound(channel, GNOME_SOUND)
 }
@@ -137,5 +137,5 @@ const handleStopSubcommand = async (interaction) => {
   const connection = getVoiceConnection(interaction.guildId)
   connection?.destroy()
 
-  return interaction.reply({ content: 'Gnome ya later!', ephemeral: true })
+  return interaction.reply({ content: 'Gnome ya later!', options: { flags: MessageFlags.Ephemeral } })
 }
