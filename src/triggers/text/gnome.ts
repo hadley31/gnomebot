@@ -11,9 +11,7 @@ const GnomeTextTrigger: TextTrigger = {
   async test(message: Message): Promise<boolean> {
     return message.content === "hello me ol' chum" && !!message.member?.voice?.channel
   },
-  /**
-   * @param {import('discord.js').Message} message
-   */
+
   async execute(message: Message) {
     const voiceChannel = message.member?.voice.channel
 

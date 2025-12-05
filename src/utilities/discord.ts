@@ -1,4 +1,4 @@
-import { Channel, GuildMember, GuildTextBasedChannel, GuildVoiceChannelResolvable, Message, PermissionsBitField, TextBasedChannel, TextChannel, User, VoiceBasedChannel, VoiceChannel } from "discord.js"
+import { Channel, GuildMember, GuildTextBasedChannel, Message, PermissionsBitField, User, VoiceBasedChannel } from "discord.js"
 import logger from "./logger.js"
 import { joinVoiceChannel, createAudioResource, createAudioPlayer, NoSubscriberBehavior, AudioPlayerStatus } from "@discordjs/voice"
 

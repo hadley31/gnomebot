@@ -3,7 +3,8 @@ import type { Command } from "./commands/types";
 
 export class GnomebotClient extends Client {
     commands: Collection<string, Command> = new Collection();
-    constructor(options: ClientOptions) {
+    constructor(options: ClientOptions, commands: Collection<string, Command>) {
         super(options);
+        this.commands = commands;
     }
 }

@@ -20,14 +20,7 @@ const client = new GnomebotClient({
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildVoiceStates,
   ],
-})
-client.commands = new Collection()
-
-// Dynamically load commands
-logger.info('Loading commands...')
-for (const command of commands) {
-  client.commands.set(command.name, command)
-}
+}, new Collection(commands.map(command => [command.name, command])))
 
 deployCommands(client.commands.map(command => command.getSlashCommand()))
 

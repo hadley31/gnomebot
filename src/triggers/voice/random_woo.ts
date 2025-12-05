@@ -9,10 +9,7 @@ const { getUserNameIDString, getChannelNameIDString } = DiscordUtil
 const RandomWooVoiceTrigger: VoiceTrigger ={
   name: "Random Gnome",
   desc: "Randomly joins a chat channel and makes a noise.",
-  /**
-   * @param {import('discord.js').VoiceState} oldVoiceState
-   * @param {import('discord.js').VoiceState} newVoiceState
-   */
+
   async test(oldVoiceState: VoiceState, newVoiceState: VoiceState): Promise<boolean> {
     return !!(
       newVoiceState.channel &&

@@ -9,10 +9,6 @@ dotenv.config()
 
 const { CLIENT_ID, GUILD_ID, DISCORD_AUTH_TOKEN } = process.env
 
-/**
- * 
- * @param {SlashCommandBuilder[]} commands 
- */
 export default function deployCommands(commandBuilders: CommandBuilder[]) {
   if (!CLIENT_ID || !DISCORD_AUTH_TOKEN || !GUILD_ID) {
     throw new Error('Missing CLIENT_ID, DISCORD_AUTH_TOKEN, or GUILD_ID in environment variables.')

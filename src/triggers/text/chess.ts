@@ -8,9 +8,7 @@ import type { Message } from "discord.js"
 const ChessTextTrigger: TextTrigger = {
   name: "Chess",
   desc: `Makes a chess move if it is valid algebraic notation`,
-  /**
-   * @param {import('discord.js').Message} message
-   */
+
   async test(message: Message): Promise<boolean> {
     const game = await chess.getGame(message.channel)
     return !!game && game.moves().includes(message.content)
