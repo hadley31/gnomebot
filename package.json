@@ -2,12 +2,12 @@
   "name": "gnomebot",
   "version": "1.0.0",
   "description": "Gnomes everywhere!",
-  "main": "src/main.js",
+  "main": "src/main.ts",
   "scripts": {
-    "dev": "nodemon src/main.js",
+    "dev": "bun --watch src/main.ts",
     "dev:docker": "docker compose -f compose-dev.yaml up gnomebot --force-recreate --remove-orphans",
-    "start": "node src/main.js",
-    "start:docker": "docker compose -f compose.yaml up gnomebot --force-recreate --remove-orphans"
+    "start": "bun src/main.ts",
+    "start:docker": "docker compose -f compose.yaml up gnomebot"
   },
   "author": "Nick Hadley",
   "license": "ISC",
@@ -22,10 +22,12 @@
     "dotenv": "^17.2.3",
     "lodash": "^4.17.21",
     "redis": "^5.10.0",
+    "stockfish": "^17.1.0",
     "winston": "^3.18.3",
     "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.21",
     "eslint": "^9.39.1",
     "nodemon": "^3.1.11"
   },

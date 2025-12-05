@@ -1,6 +1,8 @@
+import type { TextTrigger } from "../types"
+
 const gnome_regex = /.*g.*n.*[o0].*m.*[e3].*/gi
 
-export default {
+const GnomeEmojiTextTrigger: TextTrigger = {
     name: "gnome emoji",
     desc: `Adds a gnome emoji if a message contains g n o m e.`,
     /**
@@ -16,3 +18,5 @@ export default {
         message.react('gnome:623704257161461792')
     }
 }
+
+export default GnomeEmojiTextTrigger

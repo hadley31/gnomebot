@@ -1,3 +1,4 @@
+import { Channel, GuildMember, GuildTextBasedChannel, GuildVoiceChannelResolvable, Message, PermissionsBitField, TextBasedChannel, TextChannel, User, VoiceBasedChannel, VoiceChannel } from "discord.js"
 import logger from "./logger.js"
 import { joinVoiceChannel, createAudioResource, createAudioPlayer, NoSubscriberBehavior, AudioPlayerStatus } from "@discordjs/voice"
 
@@ -5,15 +6,15 @@ import { joinVoiceChannel, createAudioResource, createAudioPlayer, NoSubscriberB
  *
  * @param {import('discord.js').User} user
  */
-export function getUserNameIDString(user) {
-  return `${user.username} (${user.id})`
+export function getUserNameIDString(user: User | GuildMember) {
+  return `${user.displayName} (${user.id})`
 }
 
 /**
  *
  * @param {import('discord.js').Channel} channel
  */
-export function getChannelNameIDString(channel) {
+export function getChannelNameIDString(channel: GuildTextBasedChannel | VoiceBasedChannel) {
   return `${channel.name} (${channel.id})`
 }
 
@@ -21,7 +22,7 @@ export function getChannelNameIDString(channel) {
  *
  * @param {import('discord.js').Message} message
  */
-export function logMessage(message) {
+export function logMessage(message: Message) {
   let userString = getUserNameIDString(message.author)
   let server = message.guild
     ? `${message.guild.name} (${message.guild.id})`
@@ -29,7 +30,7 @@ export function logMessage(message) {
   let channel =
     server === "none"
       ? message.channel.id
-      : getChannelNameIDString(message.channel)
+      : getChannelNameIDString(message.channel as GuildTextBasedChannel)
   logger.info(
     `Message (${message.id}):\n\tUser: ${userString}\n\tServer: ${server}\n\tChannel: ${channel}\n\tContent: ${message.content}`
   )
@@ -42,7 +43,7 @@ export function logMessage(message) {
  * @param {Object} options
  * @param {Number} options.volume
  */
-export async function playSound(channel, audioAsset, {volume = 0.5} = {}) {
+export async function playSound(channel: VoiceBasedChannel, audioAsset: any, {volume = 0.5} = {}) {
   if (channel === undefined) {
     logger.warning('PlaySound: Channel undefined!')
     return
@@ -69,8 +70,8 @@ export async function playSound(channel, audioAsset, {volume = 0.5} = {}) {
         noSubscriber: NoSubscriberBehavior.Pause,
       }
     })
-    const resource = createAudioResource(audioAsset)
-    resource.volume = volume
+    const resource = createAudioResource(audioAsset, {inlineVolume: true})
+    resource.volume?.setVolume(volume)
 
     connection.subscribe(player)
     player.play(resource)
@@ -82,17 +83,21 @@ export async function playSound(channel, audioAsset, {volume = 0.5} = {}) {
   }
 }
 
-/**
- * 
- * @param {import('discord.js').Collection<string, import('discord.js').GuildMember>} members 
- * @returns {import('discord.js').VoiceChannel}
- */
-export function getFirstVoiceChannelOfMembers(members) {
+export async function getUserVoiceChannel(member: GuildMember): Promise<VoiceBasedChannel | null> {
+  return member.voice.channel ?? null
+}
+
+export function isAdministrator(member: GuildMember): boolean {
+  return member.permissions.has(PermissionsBitField.Flags.Administrator)
+}
+
+
+export function getFirstVoiceChannelOfMembers(members: GuildMember[]): VoiceBasedChannel | null {
   if (!members) {
     return null
   }
 
-  return members.map(x => x.voice).find(x => x.channel)?.channel
+  return members.map(x => x.voice).find(x => x.channel)?.channel ?? null
 }
 
 export default {
