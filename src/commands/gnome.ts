@@ -1,29 +1,32 @@
 import logger from "../utilities/logger.js"
-import { getUserNameIDString, playSound, } from "../utilities/discord.js"
+import { getUserNameIDString, isAdministrator, playSound, } from "../utilities/discord.js"
 import { GNOME_SOUND, GNOME_POWER } from "../constants.js"
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { ChannelType } from "discord.js"
+import { ChannelType, ChatInputCommandInteraction, GuildMember, MessageFlags, PermissionsBitField, TextBasedChannel, VoiceBasedChannel } from "discord.js"
 import { getVoiceConnection } from "@discordjs/voice"
+import { Command } from "./types.js"
 
 
-export default {
+const GnomeCommand: Command = {
   name: "gnome",
   desc: "Gnomebot will join your channel and makes a noise.",
-  /**
-   * Command handler for `/gnome`
-   * @param {import('discord.js').CommandInteraction} interaction
-   */
-  async execute(interaction) {
-    const userOption = interaction.options.getMember('user')
-    const channelOption = interaction.options.getChannel('channel')
-    const hasPermission = interaction.member?.permissions.has("ADMINISTRATOR")
+
+  async execute(interaction: ChatInputCommandInteraction) {
+    const userOption = interaction.options.getMember('user') as GuildMember
+    const channelOption = interaction.options.getChannel('channel') as VoiceBasedChannel
+    const hasPermission = isAdministrator(interaction.member as GuildMember)
 
     if (!hasPermission && (userOption || channelOption)) {
-      logger.info(`${getUserNameIDString(interaction.author)} is not an administrator.`)
-      return interaction.reply({ content: "You must be an administrator to use that command", ephemeral: true })
+      logger.info(`${getUserNameIDString(interaction.member as GuildMember)} is not an administrator.`)
+      return interaction.reply({ content: "You must be an administrator to use that command", options: { flags: MessageFlags.Ephemeral } })
     }
 
-    const channel = getChannel(interaction, channelOption, userOption)
+    const channel = await getChannel(interaction, channelOption, userOption)
+
+    if (!channel) {
+      logger.info(`${getUserNameIDString(interaction.member as GuildMember)} is not in a voice channel.`)
+      return interaction.reply({ content: "You are not in a voice channel!", options: { flags: MessageFlags.Ephemeral } })
+    }
 
     //  /gnome power
     if (interaction.options.getSubcommand() === 'power') {
@@ -89,7 +92,7 @@ export default {
  * @param {import('discord.js').VoiceChannel} channelOption
  * @param {import('discord.js').GuildMember} userOption
  */
-const getChannel = (interaction, channelOption, userOption) => {
+async function getChannel (interaction: ChatInputCommandInteraction, channelOption: VoiceBasedChannel, userOption: GuildMember): Promise<VoiceBasedChannel | null> {
   if (channelOption) {
     return channelOption
   }
@@ -98,7 +101,9 @@ const getChannel = (interaction, channelOption, userOption) => {
     return userOption.voice?.channel
   }
 
-  return interaction.member?.voice?.channel
+  const guildMember = await interaction.guild?.members.fetch(interaction.user.id)
+
+  return guildMember?.voice?.channel ?? null
 }
 
 /**
@@ -106,8 +111,8 @@ const getChannel = (interaction, channelOption, userOption) => {
  * @param {import('discord.js').CommandInteraction} interaction
  * @param {import('discord.js').VoiceChannel} channel
  */
-const handleGnomePower = async (interaction, channel) => {
-  await interaction.reply({ content: `Joining voice channel: ${channel}`, ephemeral: true })
+const handleGnomePower = async (interaction: ChatInputCommandInteraction, channel: VoiceBasedChannel) => {
+  await interaction.reply({ content: `Joining voice channel: ${channel}`, options: { flags: MessageFlags.Ephemeral } })
 
   return playSound(channel, GNOME_POWER)
 }
@@ -117,13 +122,13 @@ const handleGnomePower = async (interaction, channel) => {
  * @param {import('discord.js').CommandInteraction} interaction
  * @param {import('discord.js').VoiceChannel} channel
  */
-const handleDefaultOption = async (interaction, channel) => {
+const handleDefaultOption = async (interaction: ChatInputCommandInteraction, channel: VoiceBasedChannel) => {
   if (!channel) {
-    logger.info(`${getUserNameIDString(interaction.member)} is not in a voice channel.`)
-    return interaction.reply({ content: "You are not in a voice channel!", ephemeral: true })
+    logger.info(`${getUserNameIDString(interaction.member as GuildMember)} is not in a voice channel.`)
+    return interaction.reply({ content: "You are not in a voice channel!", options: { flags: MessageFlags.Ephemeral } })
   }
 
-  await interaction.reply({ content: `Joining voice channel: ${channel}`, ephemeral: true })
+  await interaction.reply({ content: `Joining voice channel: ${channel}`, options: { flags: MessageFlags.Ephemeral } })
 
   return playSound(channel, GNOME_SOUND)
 }
@@ -133,9 +138,11 @@ const handleDefaultOption = async (interaction, channel) => {
  * @param {import('discord.js').CommandInteraction} interaction 
  * @returns 
  */
-const handleStopSubcommand = async (interaction) => {
-  const connection = getVoiceConnection(interaction.guildId)
+const handleStopSubcommand = async (interaction: ChatInputCommandInteraction) => {
+  const connection = getVoiceConnection(interaction.guildId!)
   connection?.destroy()
 
-  return interaction.reply({ content: 'Gnome ya later!', ephemeral: true })
+  return interaction.reply({ content: 'Gnome ya later!', options: { flags: MessageFlags.Ephemeral } })
 }
+
+export default GnomeCommand

@@ -4,29 +4,40 @@ import ytdl from "ytdl-core"
 import { closestMatch } from 'closest-match'
 import _ from 'lodash'
 import { SlashCommandBuilder } from '@discordjs/builders'
+import type { ChatInputCommandInteraction, VoiceChannel } from "discord.js"
+import { MessageFlags } from "discord.js"
+import { Command } from "./types.js"
 
 
-export default {
+const BillCommand: Command = {
   name: "bill",
   desc: "Gnomebot will join your voice channel and play a bill wurtz song",
   /**
    * Command handler for `/bill`
-   * @param {import('discord.js').CommandInteraction} interaction
    */
-  async execute(interaction) {
+  async execute(interaction: ChatInputCommandInteraction) {
     const song = interaction.options.getString('title')
     const volume = interaction.options.getInteger('volume', false) || 30
     const volumePercent = volume / 100.0
 
-    const userVoiceChannel = interaction.member.voice?.channel
+    const guildMember = await interaction.guild?.members?.fetch(interaction.user.id)
+    const userVoiceChannel = guildMember?.voice?.channel
+
+    if (!song) {
+      return interaction.reply({ content: 'You must provide a song title!', options: { flags: MessageFlags.Ephemeral } })
+    }
 
     if (!userVoiceChannel) {
-      return interaction.reply({ content: 'You must be in a voice channel!', ephemeral: true })
+      return interaction.reply({ content: 'You must be in a voice channel!', options: { flags: MessageFlags.Ephemeral } })
     }
 
     const songs = await getSongs()
 
-    const closestMatchingSong = closestMatch(song, Object.keys(songs))
+    const closestMatchingSong = closestMatch(song, Object.keys(songs)) as string
+
+    if (!closestMatchingSong) {
+      return interaction.reply({ content: `Could not find a song matching "${song}"`, options: { flags: MessageFlags.Ephemeral } })
+    }
 
     const videoId = songs[closestMatchingSong]
     const videoUrl = `https://www.youtube.com/watch?v=${videoId}`
@@ -57,22 +68,35 @@ export default {
   }
 }
 
+type YouTubeVideoDetails = {
+  snippet: {
+    title: string
+  }
+  contentDetails: {
+    videoId: string
+  }
+}
 
-const getSongs = async () => {
+type YouTubeVideoCollection = {
+  items: YouTubeVideoDetails[]
+}
+
+
+const getSongs: () => Promise<Record<string, string>> = async () => {
   logger.debug('Loading bill wurtz songs...')
   const { YOUTUBE_API_KEY } = process.env
   const playlistId = 'PLo7FOXNe7Yt8xXI3qYIualWNtIKlkeMlE'
   const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}`
-  const result = await fetch(url)
+  const result = await fetch(url) as any
 
   if (!result.ok) {
     logger.error('Unable to get songs list')
     return {}
   }
 
-  const data = await result.json()
+  const data = await result.json() as YouTubeVideoCollection
 
-  const songs = {}
+  const songs: Record<string, string> = {}
 
   for (const item of data.items) {
     songs[item.snippet.title] = item.contentDetails.videoId
@@ -80,3 +104,5 @@ const getSongs = async () => {
 
   return songs
 }
+
+export default BillCommand

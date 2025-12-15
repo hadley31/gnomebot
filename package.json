@@ -2,37 +2,34 @@
   "name": "gnomebot",
   "version": "1.0.0",
   "description": "Gnomes everywhere!",
-  "main": "src/main.js",
+  "main": "src/main.ts",
   "scripts": {
-    "dev": "nodemon src/main.js",
+    "dev": "bun --watch src/main.ts",
     "dev:docker": "docker compose -f compose-dev.yaml up gnomebot --force-recreate --remove-orphans",
-    "start": "node src/main.js",
-    "start:docker": "docker compose -f compose.yaml up gnomebot --force-recreate --remove-orphans"
+    "start": "bun src/main.ts",
+    "start:docker": "docker compose -f compose.yaml up gnomebot"
   },
   "author": "Nick Hadley",
   "license": "ISC",
   "dependencies": {
-    "@discordjs/opus": "^0.9.0",
-    "@discordjs/voice": "^0.16.1",
-    "bufferutil": "^4.0.8",
-    "chess-image-generator": "github:hadley31/chess-image-generator",
-    "chess.js": "^1.0.0-beta.8",
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.19.0",
+    "@snazzah/davey": "^0.1.8",
+    "chess-image-generator": "github:hadley31/chess-image-generator#upgrade-dependencies",
+    "chess.js": "^1.4.0",
     "closest-match": "^1.3.3",
-    "discord.js": "^14.14.1",
-    "dotenv": "^16.4.5",
-    "erlpack": "^0.1.3",
-    "lodash": "^4.17.20",
-    "redis": "^4.6.13",
-    "sodium": "github:distubejs/sodium",
-    "string-argv": "^0.3.2",
-    "utf-8-validate": "^6.0.3",
-    "winston": "^3.13.0",
-    "ytdl-core": "^4.11.5",
-    "zlib-sync": "^0.1.9"
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.3",
+    "lodash": "^4.17.21",
+    "redis": "^5.10.0",
+    "stockfish": "^17.1.0",
+    "winston": "^3.18.3",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "nodemon": "^3.1.0"
+    "@types/lodash": "^4.17.21",
+    "eslint": "^9.39.1",
+    "nodemon": "^3.1.11"
   },
   "type": "module"
 }

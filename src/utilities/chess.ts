@@ -1,9 +1,15 @@
-import ChessImageGenerator from "chess-image-generator"
-import { CommandInteraction, AttachmentBuilder, EmbedBuilder } from 'discord.js'
+import ChessImageGenerator, { Options } from "chess-image-generator"
+import { Color, Square } from "chess.js"
+import { AttachmentBuilder, EmbedBuilder } from 'discord.js'
 
-const imageOptions = {
-  'size': 512,
-  'style': 'cburnett'
+type ChessMove = {
+  from: Square,
+  to: Square
+}
+
+const imageOptions: Options = {
+  size: 512,
+  style: 'cburnett'
 }
 
 const imageGenerator = new ChessImageGenerator(imageOptions)
@@ -12,11 +18,17 @@ const imageGenerator = new ChessImageGenerator(imageOptions)
  * Generates an image buffer of a particular board state
  * @param {String} fen
  */
-export async function generateImage(fen, { move = {}, flipped = false } = {}) {
+export async function generateImage(fen: string, { move = {}, flipped = false } = {}) {
   imageGenerator.setHighlightedSquares(move)
   imageGenerator.flipped = flipped
   imageGenerator.loadFEN(fen)
   return imageGenerator.generateBuffer()
+}
+
+type GameImageEmbedOptions = {
+  move?: ChessMove,
+  reply?: string,
+  side?: Color
 }
 
 /**
@@ -28,9 +40,9 @@ export async function generateImage(fen, { move = {}, flipped = false } = {}) {
  * @param {String} options.reply
  * @param {String} options.side
  */
-export const getGameImageEmbed = async (fen, { move = {}, reply = '', side = 'w' } = {}) => {
+export async function getGameImageEmbed (fen: string, { move, reply = '', side = 'w' }: GameImageEmbedOptions) {
   const imageBuffer = await generateImage(fen, {
-    move: { [move.from]: true, [move.to]: true, },
+    move: move && { [move.from]: true, [move.to]: true, },
     flipped: side === 'b'
   })
 

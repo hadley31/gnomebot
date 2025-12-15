@@ -1,15 +1,18 @@
+import { ChatInputCommandInteraction, GuildMember, MessageFlags } from "discord.js"
 import { ERROR_RESPONSES } from "../constants.js"
 import chess from "../services/chess.js"
 import { getGameImageEmbed } from "../utilities/chess.js"
 import logger from "../utilities/logger.js"
 import { SlashCommandBuilder } from '@discordjs/builders'
+import { Command } from "./types.js"
+import { isAdministrator } from "../utilities/discord.js"
 
 const usageHelp = `\
 !gnome chess *<move>*   -   Makes a move against me in the current channel
 !gnome chess moves   -   Displays possible moves
 !gnome chess new *[side]* *[force]*   -   Starts a new game in this channel (Admin)`
 
-export default {
+const ChessCommand: Command = {
   name: "chess",
   desc: "Play chess with gnomebot",
   help: usageHelp,
@@ -84,16 +87,12 @@ export default {
 }
 
 
-/**
- * Handles chess subcommand: 'move'
- * @param {import('discord.js').CommandInteraction} interaction
- */
-const handleSubcommandMove = async (interaction) => {
-  const moveOption = interaction.options.getString('move')
-  const result = await chess.handleMove(interaction.channel, interaction.user, moveOption)
+const handleSubcommandMove = async (interaction: ChatInputCommandInteraction) => {
+  const moveOption = interaction.options.getString('move')!
+  const result = await chess.handleMove(interaction.channel!, interaction.user, moveOption)
 
-  if (result.error) {
-    return interaction.reply({ content: result.errorReply, ephemeral: true })
+  if ('error' in result) {
+    return interaction.reply({ content: result.errorReply, options: { flags: MessageFlags.Ephemeral } })
   }
 
   const { game, side, reply, move } = result
@@ -105,26 +104,22 @@ const handleSubcommandMove = async (interaction) => {
 }
 
 
-/**
- * Handles chess subcommand: 'new'
- * @param {import('discord.js').CommandInteraction} interaction
- */
-const handleSubcommandNew = async (interaction) => {
+const handleSubcommandNew = async (interaction: ChatInputCommandInteraction) => {
   const sideOption = interaction.options.getString('side')
   const opponentOption = interaction.options.getUser('opponent')
   const fenOption = interaction.options.getString('fen') || undefined
   const forceCreateOption = interaction.options.getBoolean('force')
-  const hasPermission = interaction.member?.permissions.has("ADMINISTRATOR")
-  const existingGame = await chess.getGame(interaction.channelId)
+  const hasPermission = isAdministrator(interaction.member as GuildMember)
+  const existingGame = await chess.getGame(interaction.channel!)
 
 
   if (existingGame && !existingGame.isGameOver() && !forceCreateOption) {
     logger.debug(`Existing game: ${existingGame}`)
-    return interaction.reply({ content: 'There is already game in progress in this channel', ephemeral: true })
+    return interaction.reply({ content: 'There is already game in progress in this channel', options: { flags: MessageFlags.Ephemeral } })
   }
 
   if (forceCreateOption && !hasPermission) {
-    return interaction.reply({ content: 'You do not have permission to use force option.', ephemeral: true })
+    return interaction.reply({ content: 'You do not have permission to use force option.', options: { flags: MessageFlags.Ephemeral } })
   }
 
   const side = getSide(sideOption)
@@ -133,17 +128,17 @@ const handleSubcommandNew = async (interaction) => {
   const game = await chess.createGame(interaction.channelId, { side: side, fen: fenOption, whiteUserId: interaction.user.id, blackUserId: opponentUserId })
 
   if (!game) {
-    return interaction.reply({ content: 'Something went wrong... Unable to create new game.', ephemeral: true })
+    return interaction.reply({ content: 'Something went wrong... Unable to create new game.', options: { flags: MessageFlags.Ephemeral } })
   }
 
-  const move = game.history({ verbose: true }).at(-1) || {}
+  const move = game.history({ verbose: true }).at(-1)
   const imageEmbed = await getGameImageEmbed(game.fen(), { reply: 'Created new game.', move: move, side: side })
 
   return interaction.reply(imageEmbed)
 }
 
 
-const getSide = (sideOption) => {
+const getSide = (sideOption: string | null) => {
   if (sideOption === 'random') {
     return Math.random() < 0.5 ? 'w' : 'b'
   }
@@ -155,14 +150,18 @@ const getSide = (sideOption) => {
  * Handles chess subcommand: 'fen'
  * @param {import('discord.js').CommandInteraction} interaction
  */
-const handleSubcommandFEN = async (interaction) => {
-  const game = await chess.getGame(interaction.channelId)
-
-  if (!game) {
-    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], ephemeral: true })
+const handleSubcommandFEN = async (interaction: ChatInputCommandInteraction) => {
+  if (!interaction.channel) {
+    return interaction.reply({ content: 'This command can only be used in a server channel.', options: { flags: MessageFlags.Ephemeral } })
   }
 
-  return interaction.reply({ content: `\`${game.fen()}\``, ephemeral: true })
+  const game = await chess.getGame(interaction.channel)
+
+  if (!game) {
+    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], options: { flags: MessageFlags.Ephemeral } })
+  }
+
+  return interaction.reply({ content: `\`${game.fen()}\``, options: { flags: MessageFlags.Ephemeral } })
 }
 
 
@@ -170,14 +169,20 @@ const handleSubcommandFEN = async (interaction) => {
  * Handles chess subcommand: 'moves'
  * @param {import('discord.js').CommandInteraction} interaction
  */
-const handleSubcommandMoves = async (interaction) => {
+const handleSubcommandMoves = async (interaction: ChatInputCommandInteraction) => {
+  if (!interaction.channel) {
+    return interaction.reply({ content: 'This command can only be used in a server channel.', options: { flags: MessageFlags.Ephemeral } })
+  }
+
   const game = await chess.getGame(interaction.channel)
 
   if (!game) {
-    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], ephemeral: true })
+    return interaction.reply({ content: ERROR_RESPONSES['NO_CHESS_GAME'], options: { flags: MessageFlags.Ephemeral } })
   }
 
   const moves = await game.moves()
-  const moveString = moves.map(x => `**${x}**`).join(', ')
-  return interaction.reply({ content: `Valid moves are: ${moveString}`, ephemeral: true })
+  const moveString = moves.map((move: string) => `**${move}**`).join(', ')
+  return interaction.reply({ content: `Valid moves are: ${moveString}`, options: { flags: MessageFlags.Ephemeral } })
 }
+
+export default ChessCommand

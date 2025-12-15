@@ -1,35 +1,48 @@
-import { Chess } from 'chess.js'
+import { Chess, Color, Move } from 'chess.js'
 import { closestMatch } from 'closest-match'
 import _ from "lodash"
 import { ERROR_RESPONSES } from '../constants.js'
 import logger from '../utilities/logger.js'
-import { RedisGameStore, SimpleGameStore } from './ChessGameStore.js'
+import { ChessGameStore, RedisGameStore, SimpleGameStore } from './ChessGameStore.js'
+import type { TextBasedChannel, User } from 'discord.js'
 
+type CreateGameOptions = {
+  side: Color,
+  fen: string,
+  whiteUserId?: string,
+  blackUserId?: string
+}
+
+type HandleMoveResult = HandleMoveSuccessResult | HandleMoveErrorResult
+
+type HandleMoveSuccessResult = {
+  reply: string,
+  game: Chess,
+  side: Color,
+  move: Move
+}
+
+type HandleMoveErrorResult = {
+  error: true,
+  errorReply: string
+}
 
 class ChessService {
-  /**
-   * 
-   * @param {Object} options
-   * @param {import('./ChessGameStore.js').ChessGameStore} options.store
-   */
-  constructor({ store, moveGenerator } = {}) {
-    this.store = store
+  store: ChessGameStore
+  moveGenerator: (game: Chess) => string | null
+  
+  constructor({ store, moveGenerator }: { store: ChessGameStore, moveGenerator: (game: Chess) => string | null }) {
+    this.store = store || new SimpleGameStore()
     this.moveGenerator = moveGenerator
   }
 
-  generateMove(game) {
+  generateMove(game: Chess) {
     return this.moveGenerator(game)
   }
 
-  /**
-   * 
-   * @param {import('discord.js').Channel} channel The current Discord text channel
-   * @param {import('discord.js').User} user The current Discord text channel
-   * @param {String} userMove The Discord user's move
-   */
-  async handleMove(channel, user, userMove) {
+  async handleMove(channel: TextBasedChannel, user: User, userMove: string): Promise<HandleMoveResult> {
     logger.debug(`Handling ${userMove} by ${user} in ${channel.id}`)
-    const game = await this.getGame(channel, { createIfNotExists: true })
+    const game = await this.getGame(channel, { createIfNotExists: true }) as Chess
     const side = game.turn()
 
     if (game.isGameOver()) {
@@ -131,12 +144,12 @@ class ChessService {
    * @param {String} options.fen
    * @returns {Promise<import('chess.js').Chess>}
    */
-  async createGame(channelId, { side = 'w', fen, whiteUserId, blackUserId } = {}) {
+  async createGame(channelId: string, { side = 'w', fen, whiteUserId, blackUserId }: Partial<CreateGameOptions> = {}) {
     logger.info(`Creating new chess game for channel: ${channelId}`)
     const game = new Chess(fen)
 
-    game.header('White', whiteUserId)
-    game.header('Black', blackUserId)
+    game.setHeader('White', whiteUserId || '')
+    game.setHeader('Black', blackUserId || '')
 
     if (game.turn() != side) {
       const move = this.generateMove(game)
@@ -152,14 +165,14 @@ class ChessService {
     return game
   }
 
-  isBotGame(game, channel) {
+  isBotGame(game: Chess, channel: TextBasedChannel) {
     const botId = channel.client.user.id
-    return game.header().White == botId || game.header().Black == botId
+    return game.getHeaders().White == botId || game.getHeaders().Black == botId
   }
 
-  getUserBySide(game, side) {
+  getUserBySide(game: Chess, side: Color) {
     const color = side == 'w' ? 'White' : 'Black'
-    return game.header()[color]
+    return game.getHeaders()[color]
   }
 
   /**
@@ -169,20 +182,20 @@ class ChessService {
    * @param {Boolean} options.createIfNotExists 
    * @returns {Promise<import('chess.js').Chess?>}
    */
-  async getGame(channel, { createIfNotExists = false } = {}) {
+  async getGame(channel: TextBasedChannel, { createIfNotExists = false } = {}): Promise<Chess | null> {
     logger.debug(`Getting chess game for channel: ${channel.id}`)
     const game = await this.store.getGame(channel.id)
 
     if (!game && createIfNotExists) {
       logger.info(`No existing chess game found in channel: ${channel.id}`)
-      return this.createGame(channel.id, { whiteUserId: null, blackUserId: channel.client.user.id })
+      return this.createGame(channel.id, { blackUserId: channel.client.user.id })
     }
 
     return game
   }
 
-  async clearGame(channelId) {
-    this.store.updateGame(channelId, null)
+  async clearGame(channelId: string) {
+    this.store.clearGame(channelId)
   }
 }
 
@@ -198,7 +211,7 @@ if (gameStore instanceof RedisGameStore) {
  * Generates a random move based on a given board position
  * @param {import('chess.js').Chess} game 
  */
-const randomMove = (game) => _.sample(game.moves())
+const randomMove = (game: Chess) => _.sample(game.moves()) || null
 
 const service = new ChessService({ store: gameStore, moveGenerator: randomMove })
 
